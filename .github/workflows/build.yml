@@ -1,0 +1,330 @@
+name: Build Falcon Bug APK
+on:
+  push:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.9
+      - name: Create Android project files
+        run: |
+          mkdir -p falcon-app && cd falcon-app
+          mkdir -p app app/src/main app/src/main/java/com/example/mtabug app/src/main/res/drawable app/src/main/res/values
+          cat > settings.gradle.kts << 'EOF_FALCON_0'
+          pluginManagement {
+              repositories { google(); mavenCentral(); gradlePluginPortal() }
+          }
+          dependencyResolutionManagement {
+              repositories { google(); mavenCentral() }
+          }
+          rootProject.name = "MtaBugReport"
+          include(":app")
+          EOF_FALCON_0
+          cat > build.gradle.kts << 'EOF_FALCON_1'
+          plugins {
+              id("com.android.application") version "8.5.2" apply false
+              id("org.jetbrains.kotlin.android") version "2.0.20" apply false
+              id("org.jetbrains.kotlin.plugin.compose") version "2.0.20" apply false
+          }
+          EOF_FALCON_1
+          cat > gradle.properties << 'EOF_FALCON_2'
+          org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+          android.useAndroidX=true
+          kotlin.code.style=official
+          EOF_FALCON_2
+          cat > app/build.gradle.kts << 'EOF_FALCON_3'
+          plugins {
+              id("com.android.application")
+              id("org.jetbrains.kotlin.android")
+              id("org.jetbrains.kotlin.plugin.compose")
+          }
+          android {
+              namespace = "com.example.mtabug"
+              compileSdk = 34
+              defaultConfig {
+                  applicationId = "com.example.mtabug"
+                  minSdk = 24
+                  targetSdk = 34
+                  versionCode = 1
+                  versionName = "1.0"
+              }
+              buildFeatures { compose = true }
+              compileOptions {
+                  sourceCompatibility = JavaVersion.VERSION_17
+                  targetCompatibility = JavaVersion.VERSION_17
+              }
+              kotlinOptions { jvmTarget = "17" }
+          }
+          dependencies {
+              implementation(platform("androidx.compose:compose-bom:2024.09.00"))
+              implementation("androidx.compose.material3:material3")
+              implementation("androidx.compose.ui:ui")
+              implementation("androidx.activity:activity-compose:1.9.2")
+          }
+          EOF_FALCON_3
+          cat > app/src/main/AndroidManifest.xml << 'EOF_FALCON_4'
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET" />
+              <application
+                  android:label="باگ سرور فالکن"
+                  android:icon="@drawable/ic_launcher"
+                  android:supportsRtl="true"
+                  android:theme="@style/Theme.Falcon">
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true"
+                      android:windowSoftInputMode="adjustResize">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF_FALCON_4
+          cat > app/src/main/res/values/themes.xml << 'EOF_FALCON_5'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <style name="Theme.Falcon" parent="android:Theme.Material.NoActionBar">
+                  <item name="android:statusBarColor">#0B1020</item>
+                  <item name="android:navigationBarColor">#0B1020</item>
+                  <item name="android:windowBackground">#0B1020</item>
+              </style>
+          </resources>
+          EOF_FALCON_5
+          cat > app/src/main/res/drawable/ic_launcher.xml << 'EOF_FALCON_6'
+          <?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="96dp" android:height="96dp"
+              android:viewportWidth="24" android:viewportHeight="24">
+              <path android:fillColor="#F2B84B"
+                  android:pathData="M6,1h12a5,5 0 0 1 5,5v12a5,5 0 0 1 -5,5H6a5,5 0 0 1 -5,-5V6a5,5 0 0 1 5,-5z"/>
+              <group android:pivotX="12" android:pivotY="12" android:scaleX="0.62" android:scaleY="0.62" android:translateY="0.5">
+                  <path android:fillColor="#1A1300"
+                      android:pathData="M2,9c4,0 7,1.5 10,6 3,-4.5 6,-6 10,-6 -2,4 -4,6 -6.5,7L12,22l-3.5,-6C6,15 4,13 2,9z"/>
+                  <path android:fillColor="#1A1300"
+                      android:pathData="M12,4.8m-2.2,0a2.2,2.2 0 1 1 4.4,0a2.2,2.2 0 1 1 -4.4,0"/>
+              </group>
+          </vector>
+          EOF_FALCON_6
+          cat > app/src/main/java/com/example/mtabug/MainActivity.kt << 'EOF_FALCON_7'
+          package com.example.mtabug
+
+          import android.content.Context
+          import android.os.Build
+          import android.os.Bundle
+          import androidx.activity.ComponentActivity
+          import androidx.activity.compose.setContent
+          import androidx.compose.foundation.background
+          import androidx.compose.foundation.border
+          import androidx.compose.foundation.layout.*
+          import androidx.compose.foundation.rememberScrollState
+          import androidx.compose.foundation.shape.RoundedCornerShape
+          import androidx.compose.foundation.verticalScroll
+          import androidx.compose.material3.*
+          import androidx.compose.runtime.*
+          import androidx.compose.ui.Alignment
+          import androidx.compose.ui.Modifier
+          import androidx.compose.ui.draw.clip
+          import androidx.compose.ui.graphics.Color
+          import androidx.compose.ui.platform.LocalContext
+          import androidx.compose.ui.text.font.FontWeight
+          import androidx.compose.ui.unit.LayoutDirection
+          import androidx.compose.ui.unit.dp
+          import androidx.compose.ui.unit.sp
+          import androidx.compose.ui.platform.LocalLayoutDirection
+          import kotlinx.coroutines.Dispatchers
+          import kotlinx.coroutines.launch
+          import kotlinx.coroutines.withContext
+          import org.json.JSONArray
+          import org.json.JSONObject
+          import java.net.HttpURLConnection
+          import java.net.URL
+
+          // Optional: bake your Discord webhook URL here for the public build.
+          // For testing you can paste it inside the app (⚙ button) instead.
+          private const val DEFAULT_WEBHOOK_URL = ""
+          private const val COOLDOWN_MS = 60_000L
+          private val CATEGORIES = listOf("گیم‌پلی", "اسکریپت", "وسیله نقلیه", "مپ / آبجکت", "چیت / هک", "سایر")
+
+          private val Gold = Color(0xFFF2B84B)
+          private val Navy = Color(0xFF0B1020)
+          private val CardBg = Color(0xFF141B2E)
+          private val Line = Color(0xFF2A3556)
+          private val Muted = Color(0xFF9AA6C0)
+          private val OnGold = Color(0xFF1A1300)
+
+          class MainActivity : ComponentActivity() {
+              override fun onCreate(savedInstanceState: Bundle?) {
+                  super.onCreate(savedInstanceState)
+                  setContent {
+                      MaterialTheme(
+                          colorScheme = darkColorScheme(
+                              primary = Gold, onPrimary = OnGold, background = Navy, surface = Navy,
+                              onSurface = Color(0xFFEEF2FF), outline = Line, secondaryContainer = Gold,
+                              onSecondaryContainer = OnGold
+                          )
+                      ) {
+                          CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                              Surface(Modifier.fillMaxSize(), color = Navy) { TicketScreen() }
+                          }
+                      }
+                  }
+              }
+          }
+
+          @OptIn(ExperimentalLayoutApi::class)
+          @Composable
+          fun TicketScreen() {
+              var nick by remember { mutableStateOf("") }
+              var title by remember { mutableStateOf("") }
+              var desc by remember { mutableStateOf("") }
+              var category by remember { mutableStateOf(CATEGORIES[2]) }
+              var sending by remember { mutableStateOf(false) }
+              var status by remember { mutableStateOf("") }
+              var statusOk by remember { mutableStateOf(true) }
+              var lastSent by remember { mutableLongStateOf(0L) }
+              val scope = rememberCoroutineScope()
+              val ctx = LocalContext.current
+              val prefs = remember { ctx.getSharedPreferences("falcon_bug", Context.MODE_PRIVATE) }
+              var webhook by remember { mutableStateOf(prefs.getString("webhook", DEFAULT_WEBHOOK_URL) ?: DEFAULT_WEBHOOK_URL) }
+              var showSettings by remember { mutableStateOf(webhook.isBlank()) }
+
+              Column(
+                  Modifier.fillMaxSize().systemBarsPadding().imePadding()
+                      .verticalScroll(rememberScrollState()).padding(20.dp),
+                  verticalArrangement = Arrangement.spacedBy(16.dp)
+              ) {
+                  Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                      Row(verticalAlignment = Alignment.CenterVertically) {
+                          Box(Modifier.size(52.dp).clip(RoundedCornerShape(16.dp)).background(Gold), contentAlignment = Alignment.Center) {
+                              Text("🦅", fontSize = 28.sp)
+                          }
+                          Spacer(Modifier.width(12.dp))
+                          Column {
+                              Text("باگ سرور فالکن", fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
+                              Text("مشکلی دیدی؟ همین‌جا گزارشش کن", fontSize = 13.sp, color = Muted)
+                          }
+                      }
+                      IconButton(onClick = { showSettings = !showSettings }) { Text("⚙", fontSize = 22.sp, color = Muted) }
+                  }
+
+                  if (showSettings) {
+                      OutlinedTextField(webhook, { webhook = it.trim(); prefs.edit().putString("webhook", webhook).apply() },
+                          label = { Text("آدرس وبهوک دیسکورد (تنظیم تیم)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                  }
+
+                  Column(
+                      Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(CardBg)
+                          .border(1.dp, Color(0xFF232C45), RoundedCornerShape(22.dp)).padding(16.dp),
+                      verticalArrangement = Arrangement.spacedBy(14.dp)
+                  ) {
+                      OutlinedTextField(nick, { nick = it }, label = { Text("نیک‌نیم داخل بازی") },
+                          singleLine = true, modifier = Modifier.fillMaxWidth())
+
+                      Text("دسته‌بندی", fontSize = 13.sp, color = Muted)
+                      FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                          CATEGORIES.forEach { c ->
+                              FilterChip(
+                                  selected = category == c, onClick = { category = c }, label = { Text(c) },
+                                  colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Gold, selectedLabelColor = OnGold)
+                              )
+                          }
+                      }
+
+                      OutlinedTextField(title, { if (it.length <= 80) title = it }, label = { Text("عنوان") },
+                          singleLine = true, modifier = Modifier.fillMaxWidth())
+
+                      OutlinedTextField(desc, { if (it.length <= 1000) desc = it },
+                          label = { Text("چی شد؟ چطور می‌شه دوباره تکرارش کرد؟") },
+                          supportingText = { Text("${desc.length} / 1000") },
+                          modifier = Modifier.fillMaxWidth().heightIn(min = 150.dp))
+                  }
+
+                  if (status.isNotEmpty()) {
+                      Box(
+                          Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+                              .background(if (statusOk) Color(0xFF10281D) else Color(0xFF2B1418))
+                              .padding(14.dp)
+                      ) { Text(status, color = if (statusOk) Color(0xFF7BE0A4) else Color(0xFFFF9AA2), fontSize = 14.sp) }
+                  }
+
+                  Button(
+                      enabled = !sending,
+                      modifier = Modifier.fillMaxWidth().height(54.dp),
+                      shape = RoundedCornerShape(16.dp),
+                      onClick = {
+                          val wait = COOLDOWN_MS - (System.currentTimeMillis() - lastSent)
+                          statusOk = false
+                          when {
+                              nick.isBlank() || title.length < 3 || desc.length < 10 ->
+                                  status = "لطفاً همه‌ی فیلدها رو پر کن."
+                              !webhook.startsWith("https://") -> { status = "آدرس وبهوک تنظیم نشده. دکمه‌ی ⚙ رو بزن."; showSettings = true }
+                              wait > 0 -> status = "لطفاً ${wait / 1000 + 1} ثانیه صبر کن و دوباره بفرست."
+                              else -> {
+                                  sending = true; statusOk = true; status = "در حال ارسال..."
+                                  scope.launch {
+                                      val ok = withContext(Dispatchers.IO) { sendTicket(webhook, nick.trim(), category, title.trim(), desc.trim()) }
+                                      sending = false; statusOk = ok
+                                      if (ok) { lastSent = System.currentTimeMillis(); title = ""; desc = ""; status = "تیکت ارسال شد. ممنون!" }
+                                      else status = "ارسال نشد. اینترنت رو چک کن و دوباره امتحان کن."
+                                  }
+                              }
+                          }
+                      }
+                  ) { Text(if (sending) "در حال ارسال..." else "ارسال تیکت", fontSize = 17.sp, fontWeight = FontWeight.ExtraBold) }
+              }
+          }
+
+          private fun sendTicket(webhookUrl: String, nick: String, category: String, title: String, desc: String): Boolean = try {
+              fun field(n: String, v: String, inline: Boolean = true) =
+                  JSONObject().put("name", n).put("value", v).put("inline", inline)
+
+              val embed = JSONObject()
+                  .put("title", title)
+                  .put("description", desc)
+                  .put("color", 15903819)
+                  .put("fields", JSONArray()
+                      .put(field("بازیکن", nick))
+                      .put(field("دسته‌بندی", category))
+                      .put(field("دستگاه", "${Build.MANUFACTURER} ${Build.MODEL} (Android ${Build.VERSION.RELEASE})", false)))
+              val body = JSONObject().put("username", "باگ سرور فالکن").put("embeds", JSONArray().put(embed)).toString()
+
+              val conn = URL(webhookUrl).openConnection() as HttpURLConnection
+              conn.requestMethod = "POST"
+              conn.setRequestProperty("Content-Type", "application/json; charset=utf-8")
+              conn.connectTimeout = 10_000
+              conn.readTimeout = 10_000
+              conn.doOutput = true
+              conn.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
+              val code = conn.responseCode
+              conn.disconnect()
+              code in 200..299
+          } catch (e: Exception) { false }
+          EOF_FALCON_7
+      - name: Build debug APK
+        working-directory: falcon-app
+        run: gradle assembleDebug --no-daemon
+      - name: Rename APK
+        run: cp falcon-app/app/build/outputs/apk/debug/app-debug.apk FalconBug.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FalconBug-apk
+          path: FalconBug.apk
+      - name: Publish download link (Release)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Falcon Bug Report (latest)
+          files: FalconBug.apk
